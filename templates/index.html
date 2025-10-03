@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Waste Classification</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .upload-area { border: 2px dashed #ccc; padding: 40px; text-align: center; margin: 20px 0; }
+        .result { padding: 20px; margin: 20px 0; border-radius: 10px; }
+        .recyclable { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .non-recyclable { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        button { background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>♻️ Waste Classification</h1>
+    <p>Upload an image to classify waste as Recyclable or Non-Recyclable</p>
+    
+    <div class="upload-area">
+        <input type="file" id="fileInput" accept="image/*">
+        <p>Click to select an image or drag and drop</p>
+    </div>
+    
+    <button onclick="predict()">Classify Waste</button>
+    
+    <div id="result"></div>
+    
+    <script>
+        function predict() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select an image file');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultDiv = document.getElementById('result');
+                
+                if (data.error) {
+                    resultDiv.innerHTML = `<div class="result" style="background-color: #f8d7da; color: #721c24;">Error: ${data.error}</div>`;
+                } else {
+                    const className = data.class_name === 'Recyclable' ? 'recyclable' : 'non-recyclable';
+                    const icon = data.class_name === 'Recyclable' ? '♻️' : '🚫';
+                    
+                    resultDiv.innerHTML = `
+                        <div class="result ${className}">
+                            <h2>${icon} ${data.class_name}</h2>
+                            <p>Confidence: ${data.confidence_percent.toFixed(2)}%</p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                document.getElementById('result').innerHTML = `<div class="result" style="background-color: #f8d7da; color: #721c24;">Error: ${error}</div>`;
+            });
+        }
+    </script>
+</body>
+</html>
+
